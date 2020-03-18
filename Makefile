@@ -6,7 +6,7 @@
 
 PROC=powerpc
 TYPE=eabi
-PREFIX=$(PROC)-$(TYPE)-
+PREFIX=/opt/cross/powerpc-linux-musl-cross/bin/powerpc-linux-musl-
 #PATH:=/usr/local/bin:$(PATH)
 CFLAGS=-Iinc
 
@@ -18,7 +18,7 @@ NM=$(PREFIX)nm
 OBJDUMP=$(PREFIX)objdump
 OBJCOPY=$(PREFIX)objcopy
 
-QEMU=~/qemu/ppc-softmmu/qemu-system-ppc
+QEMU=qemu-system-ppc
 
 .PHONY: all
 
