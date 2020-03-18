@@ -8,7 +8,7 @@ PROC=powerpc
 TYPE=eabi
 PREFIX=/opt/cross/powerpc-linux-musl-cross/bin/powerpc-linux-musl-
 #PATH:=/usr/local/bin:$(PATH)
-CFLAGS=-Iinc
+CCFLAGS=-mbig-endian -g -gstabs+ -nostdlib
 
 CC=$(PREFIX)gcc
 AS=$(PREFIX)as
@@ -18,37 +18,29 @@ NM=$(PREFIX)nm
 OBJDUMP=$(PREFIX)objdump
 OBJCOPY=$(PREFIX)objcopy
 
-QEMU=qemu-system-ppc
+QEMU=~/workspace/qemu/bin/debug/native/ppc-softmmu/qemu-system-ppc
 
 .PHONY: all
 
-all : test.bin
+all : bios.bin os.elf
 
-startup.o : startup.S
-	$(CC) -mbig-endian -g -c -gstabs+ -Wa,-alh=startup.lst,-L -o $@ $<
+bios.elf : bios.S bios.ld
+	$(CC) $(CCFLAGS) -T bios.ld bios.S -o $@
 
-test.o : test.c
-	$(CC) $(CFLAGS) -c -mcpu=8540 -g $< -o $@
-
-
-test.elf : test.o startup.o  test.ld
-	$(LD) -T test.ld test.o startup.o -o $@
-
-
-test.bin : test.elf
+bios.bin : bios.elf
 	 $(OBJCOPY) -O binary  $< $@
 
-nm_test:
-	$(NM) test.elf
-dis_test:
-	$(OBJDUMP) --disassemble test.elf
+os.elf : startup.S main.c os.ld
+	$(CC) $(CCFLAGS) -T os.ld -o $@ startup.S main.c
+
+dis_os : os.elf
+	$(OBJDUMP) --disassemble os.elf
 
 clean :
 	rm -f -v *.o *.elf *.bin *.lst
 
-run:
-	$(QEMU) -cpu e500 -d guest_errors,unimp -M ppce500 -nographic -bios test.elf  -s
+run : bios.bin
+	$(QEMU) -cpu 405 -d guest_errors,unimp -M ref405ep -nographic -bios bios.bin -device loader,file=os.elf -s
 
-
-debug:
-	$(QEMU) -cpu e500 -d guest_errors,unimp -M ppce500 -nographic -bios test.elf  -s -S
+debug : bios.bin
+	$(QEMU) -cpu 405 -d guest_errors,unimp -M ref405ep -nographic -bios bios.bin  -monitor telnet:127.0.0.1:5555,server; -s

@@ -14,39 +14,41 @@
  * they apply.
  */
 
-/* provided by the gnu-toolchain */
-#include "ppc-asm.h"
+.file	"startup.S"
+.text
+.global os_entry
+os_entry:
 
-	.file	"startup.S"
-	.text
-.Lptr:
-	.globl	_Reset
-	.type	_Reset,@function
-_Reset:
-	bl	.Laddr			/* get current address */
-.Laddr:
-	mflr	r4			/* real address of .Laddr */
-	lwz	r0,(.Lstk-.Laddr)(r4)	/* stack address location */
-	mr	sp,r0			/* use user defined stack */
+	/* make memory unguarded */
+	li %r1, 0
+	mtsgr %r1
 
-	addi	sp,sp,-4		/* make sure we don't overwrite debug mem */
-	lis	r0,0
-	stw	r0,0(sp)		/* clear back chain */
-	stwu	sp,-64(sp)		/* push another stack frame */
+	/* invalidate icache */
+	iccci
+	isync
 
+	/* invalidate dcache */
+	/* line */
+	li %r1, 0
+	/* address */
+	li %r2, 0
+
+invalidate_dcache_line:
+	dccci %r2
+	addi %r1, %r1, 1
+	addi %r2, %r2, 32
+	cmpwi %r1, 256
+	blt invalidate_dcache_line
+
+	isync
 	
-	/* Let her rip */
+	/* load the stack */
+	lis %r1, stack_top@h
+	ori %r1, %r1, stack_top@l
 
-	bl	FUNC_NAME(c_entry)
-	/* return value from main is argument to exit */
-	bl	FUNC_NAME(exit) 
-	bl	FUNC_NAME(_Reset)
+	bl	c_entry
+
+eloop:
+	b eloop
 
 	trap
-
-
-	
-	.Lstk:
-/*	.long	__stack*/
-	.long	stack_top
-
