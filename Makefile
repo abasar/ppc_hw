@@ -30,8 +30,8 @@ bios.elf : bios.S bios.ld
 bios.bin : bios.elf
 	 $(OBJCOPY) -O binary  $< $@
 
-os.elf : startup.S main.c os.ld
-	$(CC) $(CCFLAGS) -T os.ld -o $@ startup.S main.c
+os.elf : startup.S utils.S main.c os.ld
+	$(CC) $(CCFLAGS) -T os.ld -o $@ startup.S utils.S main.c
 
 dis_os : os.elf
 	$(OBJDUMP) --disassemble os.elf
