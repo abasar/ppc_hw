@@ -18,7 +18,7 @@ NM=$(PREFIX)nm
 OBJDUMP=$(PREFIX)objdump
 OBJCOPY=$(PREFIX)objcopy
 
-QEMU=~/workspace/qemu/bin/debug/native/ppc-softmmu/qemu-system-ppc
+QEMU=~/workspace/build-qemu/native/debug/ppc-softmmu/qemu-system-ppc
 
 .PHONY: all
 
